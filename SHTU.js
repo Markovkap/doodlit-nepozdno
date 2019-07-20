@@ -4,20 +4,22 @@ var blockSize = 10;
 var width, height;
 var nearPlatform;
 var theBestScore = 0;
+var zapusk = 0;
+var pause = 1;
 var theBestScoreFunc = null;
-var file = fetch("/jf.json");
-file.then(function (respons) {
-        return respons.json();
-    })
-    .then(function (file) {
-        theBestScore = file.record;
-        theBestScoreFunc = function (canvasContext) {
-            canvasContext.textAlign = "right";
-            canvasContext.textBaseline = "top";
-            canvasContext.fillText("The best: " + theBestScore, width * blockSize - 10, 15);
-        };
-    })
-    .catch(alert);
+// var file = fetch("/jf.json");
+// file.then(function (respons) {
+//         return respons.json();
+//     })
+//     .then(function (file) {
+//         theBestScore = file.record;
+//         theBestScoreFunc = function (canvasContext) {
+//             canvasContext.textAlign = "right";
+//             canvasContext.textBaseline = "top";
+//             canvasContext.fillText("The best: " + theBestScore, width * blockSize - 10, 15);
+//         };
+//     })
+//     .catch(alert);
 width = 60;
 height = Math.floor(window.innerHeight / blockSize);
 canvas.width = width * blockSize;
@@ -120,25 +122,24 @@ function randomInteger(min, max) {
     return rand;
 }
 
-
+ctx.beginPath();
+ctx.fillStyle = "green";
+ctx.moveTo(100, 100);
+ctx.lineTo(200, 150);
+ctx.moveTo(200, 150);
+ctx.lineTo(100, 200);
+ctx.moveTo(100, 200);
+ctx.lineTo(100, 100);
+ctx.stroke();
 
 createPlatforms(height / 5 - 5);
 player.dy = 1;
-setInterval(function () {
-    ctx.clearRect(0, 0, width * blockSize, height * blockSize);
-    drawField();
-    drawPlatforms();
-    drawHeader();
-    nuznoLiNaprigatsa();
-    player.draw();
-    player.move();
-    drawScore();
-}, 100);
 
 var actions = {
     37: "left",
     39: "right",
-    13: "enter"
+    13: "enter",
+    27: "esc"
 };
 
 $("body").keydown(function (event) {
@@ -156,6 +157,22 @@ $("body").keydown(function (event) {
             }
             break;
         case "enter":
+            zapusk += 1;
+            if (zapusk == 1) {
+                var f = setInterval(function () {
+                    ctx.clearRect(0, 0, width * blockSize, height * blockSize);
+                    drawField();
+                    drawPlatforms();
+                    drawHeader();
+                    nuznoLiNaprigatsa();
+                    player.draw();
+                    player.move();
+                    drawScore();
+                }, 100);
+            }
+            break;
+        case "esc":
+            alert("pause, click on the button to continue game");
             break;
     }
 });
