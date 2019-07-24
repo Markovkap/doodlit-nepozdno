@@ -3,6 +3,7 @@ var ctx = canvas.getContext("2d");
 var blockSize = 10;
 var width, height;
 var nearPlatform;
+// var whenKill
 var theBestScore = 0;
 var zapusk = false;
 var zapuskEnter = true;
@@ -166,6 +167,13 @@ function drawStartButton() {
 var b = drawStartButton();
 var f = null;
 
+function golovoreziPlatform(){
+    for(var i = 0; i < platformi.length; i++){
+        platformi[i].y++; 
+    }
+    player.y+=2;
+}
+
 function startGame() {
     if (zapusk) {
         f = setInterval(function () {
@@ -177,6 +185,10 @@ function startGame() {
             player.draw();
             player.move();
             drawScore();
+            console.log(player.y);
+            if(player.y+3<=height/2){
+                golovoreziPlatform()
+            }
         }, 100);
     }
 }
