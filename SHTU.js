@@ -4,22 +4,33 @@ var blockSize = 10;
 var width, height;
 var nearPlatform;
 var theBestScore = 0;
-var zapusk = 0;
+var zapusk = false;
+var zapuskEnter = true;
 var pause = 1;
+var endForPause = false;
+
 var theBestScoreFunc = null;
-// var file = fetch("/jf.json");
-// file.then(function (respons) {
-//         return respons.json();
-//     })
-//     .then(function (file) {
-//         theBestScore = file.record;
-//         theBestScoreFunc = function (canvasContext) {
-//             canvasContext.textAlign = "right";
-//             canvasContext.textBaseline = "top";
-//             canvasContext.fillText("The best: " + theBestScore, width * blockSize - 10, 15);
-//         };
-//     })
-//     .catch(alert);
+var myHeaders = new Headers();
+myHeaders.append('pragma', 'no-cache');
+myHeaders.append('cache-control', 'no-cache');
+
+var myInit = {
+    method: 'GET',
+    headers: myHeaders,
+};
+var file = fetch("/jf.json", myInit);
+file.then(function (respons) {
+        return respons.json();
+    })
+    .then(function (file) {
+        theBestScore = file.record;
+        theBestScoreFunc = function (canvasContext) {
+            canvasContext.textAlign = "right";
+            canvasContext.textBaseline = "top";
+            canvasContext.fillText("The best: " + theBestScore, width * blockSize - 10, 15);
+        };
+    })
+    .catch(alert);
 width = 60;
 height = Math.floor(window.innerHeight / blockSize);
 canvas.width = width * blockSize;
@@ -95,7 +106,16 @@ function nuznoLiNaprigatsa() {
         return platform.y > player.y && platform.y < player.y + 5 * blockSize;
     })[0];
 
-    if (typeof nearPlatform === 'undefined' && player.dy != 0) alert('your score: ' + score);
+    if (typeof nearPlatform === 'undefined' && player.dy != 0) {
+        clearInterval(f);
+        endForPause = true;
+        neNaprigaisia("Потрачено",100);
+        ctx.font = "50px Comic Sans MS";
+    ctx.fillStyle = "Black";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("your score: "+score , width / 2 * 10, height / 2 * 10+100);
+    }
 
     if (nearPlatform.y + 1 == player.y + 4 && (player.x + 2 >= nearPlatform.x && player.x <= nearPlatform.x + 4)) {
         player.dy = -1;
@@ -122,15 +142,44 @@ function randomInteger(min, max) {
     return rand;
 }
 
-ctx.beginPath();
-ctx.fillStyle = "green";
-ctx.moveTo(100, 100);
-ctx.lineTo(200, 150);
-ctx.moveTo(200, 150);
-ctx.lineTo(100, 200);
-ctx.moveTo(100, 200);
-ctx.lineTo(100, 100);
-ctx.stroke();
+
+function drawStartButton() {
+    var w2 = width / 2 * 10;
+    var h2 = height / 2 * 10;
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(w2 - 75, h2 - 75, 140, 150);
+    ctx.beginPath();
+    ctx.moveTo(w2 - 50, h2 - 50);
+    ctx.lineTo(w2 + 50, h2);
+    ctx.lineTo(w2 - 50, h2 + 50);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillStyle = "green";
+    ctx.fill();
+    return {
+        x0: w2 - 75,
+        y0: h2 - 75,
+        x1: w2 + 65,
+        y1: h2 + 75
+    }
+}
+var b = drawStartButton();
+var f = null;
+
+function startGame() {
+    if (zapusk) {
+        f = setInterval(function () {
+            ctx.clearRect(0, 0, width * blockSize, height * blockSize);
+            drawField();
+            drawPlatforms();
+            drawHeader();
+            nuznoLiNaprigatsa();
+            player.draw();
+            player.move();
+            drawScore();
+        }, 100);
+    }
+}
 
 createPlatforms(height / 5 - 5);
 player.dy = 1;
@@ -141,6 +190,14 @@ var actions = {
     13: "enter",
     27: "esc"
 };
+
+function neNaprigaisia(text,size){
+    ctx.font = size + "px Comic Sans MS";
+    ctx.fillStyle = "Black";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text , width / 2 * 10, height / 2 * 10);
+}
 
 $("body").keydown(function (event) {
     switch (actions[event.keyCode]) {
@@ -157,22 +214,39 @@ $("body").keydown(function (event) {
             }
             break;
         case "enter":
-            zapusk += 1;
-            if (zapusk == 1) {
-                var f = setInterval(function () {
-                    ctx.clearRect(0, 0, width * blockSize, height * blockSize);
-                    drawField();
-                    drawPlatforms();
-                    drawHeader();
-                    nuznoLiNaprigatsa();
-                    player.draw();
-                    player.move();
-                    drawScore();
-                }, 100);
+            if (zapuskEnter) {
+                zapuskEnter = false;
+                zapusk = true;
+                startGame();
             }
             break;
         case "esc":
-            alert("pause, click on the button to continue game");
+            if (endForPause) return false;
+            zapusk = !zapusk;
+            clearInterval(f);
+            neNaprigaisia("pause",100);
+            startGame();
             break;
     }
 });
+
+
+//report the mouse position on click
+canvas.addEventListener("click", function (evt) {
+    if (!zapuskEnter) return false;
+    var mousePos = getMousePos(canvas, evt);
+    if ((mousePos.x >= b.x0) && (mousePos.x <= b.x1) && (mousePos.y >= b.y0) && (mousePos.y <= b.y1)) {
+        zapuskEnter = false;
+        zapusk = true;
+        startGame();
+    }
+}, false);
+
+//Get Mouse Position
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
